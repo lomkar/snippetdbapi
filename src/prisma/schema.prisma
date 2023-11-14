@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRESQL_DATABASE_URL")
+}
+
+model User {
+  id                       String               @id @unique @default(uuid())
+  name                     String
+  email                    String               @unique
+  password                 String
+  tokenVersion             Int
+  isAccountVerifiedByEmail Int                  @default(0)
+  resetLink                String               @default("")
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @updatedAt
+  snippetCreated           Snippet[]
+  teams                    UserAndTeamMapping[]
+}
+
+model Team {
+  id         String               @id @unique @default(uuid())
+  teamName   String
+  categories Category[]
+  users      UserAndTeamMapping[]
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+  isDeleted  Int                  @default(0)
+}
+
+model UserAndTeamMapping {
+  userid    String
+  user      User     @relation(fields: [userid], references: [id])
+  teamid    String
+  team      Team     @relation(fields: [teamid], references: [id])
+  isAdmin   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDeleted Int      @default(0)
+
+  @@id([userid, teamid])
+}
+
+model Category {
+  id           String    @id @unique @default(uuid())
+  categoryName String
+  team         Team      @relation(fields: [teamid], references: [id])
+  teamid       String
+  snippets     Snippet[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  isDeleted    Int       @default(0)
+}
+
+model Snippet {
+  id               String   @id @unique @default(uuid())
+  title            String
+  description      String
+  codeSnippet      String
+  userId           String
+  category         Category @relation(fields: [categoryid], references: [id])
+  creatorOfSnippet User     @relation(fields: [userId], references: [id])
+  categoryid       String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  isDeleted        Int      @default(0)
+}
